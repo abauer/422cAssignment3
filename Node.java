@@ -40,9 +40,9 @@ public class Node{
 
     public ArrayList<String> getFamilyTree(Node child){
         ArrayList<String> value = new ArrayList<String>();
-        value.add(s);
-        if(parent!=null)
-            value.addAll(getFamilyTree(parent));
+        value.add(child.toString());
+        if(child.parent!=null)
+            value.addAll(getFamilyTree(child.parent));
         return value;
     }
 }
