@@ -24,8 +24,9 @@ public class Node{
         length = s.length();
     }
 
-    public void setParent(Node n){
+    public Node setParent(Node n){
         parent = n;
+        return this;
     }
 
     public String toString(){

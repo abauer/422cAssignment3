@@ -25,22 +25,67 @@ public class Main {
 	static HashSet<String> dictionary;
     static HashSet<String> breadthVisited;
     static HashSet<String> deapthVisited;
+    static HashMap<String,ArrayList<String>> adjacents;
 
     @Test
-    public void test1(){
+    public void initTest(){
         initialize();
-        ArrayList<String> ladder = new ArrayList<String>();
-        ladder.add("money"); ladder.add("stone");
-        printLadder(ladder);
     }
 
     @Test
-    public void test2(){
+    public void testb1(){
         initialize();
-        ArrayList<String> ladder = new ArrayList<String>();
-        ladder.add("smart"); ladder.add("money");
-        printLadder(ladder);
+        printLadder(getWordLadderBFS("money","stone"));
     }
+    @Test
+    public void testb2(){
+        initialize();
+        printLadder(getWordLadderBFS("smart","money"));
+    }
+    @Test
+    public void testb3(){
+        initialize();
+        printLadder(getWordLadderBFS("peach","wooed"));
+    }
+    @Test
+    public void testb4(){   //confirms that dfs gives a suboptimal result
+        initialize();
+        printLadder(getWordLadderBFS("wrote","amigo"));
+    }
+    @Test
+    public void testb5(){   //confirms that DFS result of no ladder is correct
+        initialize();
+        printLadder(getWordLadderBFS("whump","xylan"));
+    }
+
+
+
+    @Test
+    public void testd1(){//// TODO: 9/27/2016
+        initialize();
+        printLadder(getWordLadderDFS("SMART","MONEY"));
+    }
+    @Test
+    public void testd2(){//// TODO: 9/27/2016
+        initialize();
+        printLadder(getWordLadderDFS("MONEY","STONE"));
+    }
+    @Test
+    public void testd3(){
+        initialize();
+        printLadder(getWordLadderDFS("wrote","amigo"));
+    }
+    @Test
+    public void testd4(){ // test to determine that dfs cannot find this word ladder
+        initialize();
+        printLadder(getWordLadderDFS("whump","xylan"));
+    }
+    @Test
+    public void testd5(){// TODO: 9/27/2016
+        initialize();
+        printLadder(getWordLadderDFS("wrote","amigo"));
+    }
+
 
 	public static void main(String[] args) throws Exception {
 
@@ -56,8 +101,7 @@ public class Main {
 			ps = System.out;			// default to Stdout
 		}
 		initialize();
-		
-		// TODO methods to read in words, output ladder
+		printLadder(parse(kb));
 	}
 	
 	public static void initialize() {
@@ -65,7 +109,29 @@ public class Main {
         dictionary = new HashSet<String>();
         deapthVisited = new HashSet<String>();
         breadthVisited = new HashSet<String>();
-        dictionary.addAll(temp);
+        adjacents = new HashMap<String,ArrayList<String>>();
+        temp.stream().forEach(word -> dictionary.add(word));        //awesomeness at work
+        for(String word : temp){
+            ArrayList<String> words = new ArrayList<String>();
+            for(int i =0; i<word.length(); i++) {
+                StringBuilder sb = new StringBuilder(word);
+                for (char alpha = 'A'; alpha <= 'Z'; alpha++) {
+                    if (alpha == word.charAt(i))
+                        continue;
+                    sb.setCharAt(i, alpha);
+                    if (dictionary.contains(sb.toString())) {
+                        words.add(sb.toString().toUpperCase());
+                    }
+                }
+            }
+            ArrayList<String> values = adjacents.get(word);
+            if(values==null){
+                adjacents.put(word,words);
+            }
+            else{
+                values.addAll(words);
+            }
+        }
 	}
 	
 	/**
@@ -74,31 +140,29 @@ public class Main {
 	 * If command is /quit, return empty ArrayList.
 	 */
 	public static ArrayList<String> parse(Scanner keyboard) {
-        char[] input = keyboard.nextLine().trim().toCharArray();
-		if(String.copyValueOf(input).equals("/quit"))
+        String input = keyboard.nextLine().trim().toUpperCase();
+		if(input.contains("/QUIT"))         //look for quit command
 		    System.exit(0);
-        StringBuilder sb = new StringBuilder(input.length);
-        StringBuilder sb2 = new StringBuilder(input.length);
-        int i = 0;
-        for(; i<input.length; i++){
-            if(input[i]=='\n'||input[i]==9||input[i]==32){
+        char[] chars = input.toCharArray();     //prepare to parse for two words
+        StringBuilder sb = new StringBuilder(chars.length); //first word
+        int i = 0;  //index in input string
+        for(; i<chars.length; i++){ //until we see a space (len of first word)
+            if(chars[i]=='\n'||chars[i]==9||chars[i]==32){
                 break;
             }
-            sb.append(input[i]);
+            sb.append(chars[i]);
         }
-        for(; i<input.length; i++){
-            if(input[i]=='\n'||input[i]==9||input[i]==32){
-                break;
-            }
-            sb2.append(input[i]);
-        }
+        String sb2 = new String(input.substring(i+1).trim());
         ArrayList<String> value = new ArrayList<String>();
-        value.add(sb.toString().toUpperCase()); value.add(sb2.toString().toUpperCase());
+        value.add(sb.toString()); value.add(sb2);
         return value;
 	}
-	
-	public static ArrayList<String> getWordLadderDFS(String start, String end) { //recursive
-        return getWordLadderDFS(start.toUpperCase(), end.toUpperCase(), 0);
+
+	public static ArrayList<String> getWordLadderDFS(String start, String end) {
+        if (start.equals(end)) {
+            return new ArrayList<String>();
+        }
+        return getWLDFS(start, end);
     }
 	
     public static ArrayList<String> getWordLadderBFS(String start, String end) {  //iterative
@@ -122,44 +186,20 @@ public class Main {
 	}
 	
 	public static void printLadder(ArrayList<String> ladder) {
-		List<String> value = getWordLadderBFS(ladder.get(0),ladder.get(1));
-        //System.out.println(ladder.get(0));
-        for(int i = value.size()-1; i>0; i--){
-            System.out.println(value.get(i));
+        if(ladder.isEmpty()){ //TODO how to get start and finish?
+            System.out.println("no word ladder can be found between <start> and <finish>");
+            return;
+        }
+        System.out.println("a "+(ladder.size()-2)+"-rung word ladder exists between "+ladder.get(ladder.size()-1).toLowerCase()+" and "+ladder.get(0).toLowerCase()+".");
+        for(int i = ladder.size()-1; i>=0; i--){
+            System.out.println(ladder.get(i).toLowerCase());
         }
 	}
 
-    private static ArrayList<String> getWordLadderDFS(String start, String end, int lastChanged){
-        if(end.equals(start)) {
-            ArrayList<String> value = new ArrayList<String>();
-            value.add(end);
-            return value;
-        }
-        ArrayList<String> value = new ArrayList<String>();
-        String friend = "";
-        deapthVisited.add(start);       //mark current word visited
-        for(int index = 0; index<start.length(); index++){              //for every letter in start word
-            int i = (index+lastChanged)%start.length();
-            StringBuilder sb = new StringBuilder(start);        //create a temp string
-            for(char alpha = 'A'; alpha<='z'; alpha++) {        //try all letters in alphabet
-                if(alpha==sb.charAt(i)) //skip original word
-                    continue;
-                sb.setCharAt(i,alpha);                      //change the temp word
-                friend = sb.toString().toUpperCase();
-                if (dictionary.contains(friend) && !deapthVisited.contains(friend)){        //if the temp word exists
-                    value.addAll(getWordLadderDFS(friend,end,i));                        //go down that path to find end
-                    if(!value.isEmpty()){       //if we found the end
-                        value.add(start);
-                        //resetvisited
-                        return value;
-                    }
-                }
-            }
-        }
-        return value;
-    }
-
     private static ArrayList<String> getWordLadderBFS(Node start, Node end){
+        if(start.equals(end)){
+            return new ArrayList<String>();
+        }
         LinkedList<Node> Q = new LinkedList<Node>();                        //Queue implementation
         Q.push(start);
         breadthVisited.add(start.toString());
@@ -167,28 +207,43 @@ public class Main {
             Node root = Q.remove();
             if(root.equals(end)){
                 ArrayList<String> value = new ArrayList<String>();
-                value.add(end.toString());
                 value.addAll(root.getFamilyTree(root));
                 breadthVisited.clear();
                 return value;
             }
-            for(int i = 0; i<root.length; i++) {              //for every letter in current word
-                StringBuilder sb = new StringBuilder(root.toString());        //create a temp string
-                for (char alpha = 'A'; alpha <= 'Z'; alpha++) {
-                    if (alpha == root.toString().charAt(i)) //skip original word
-                        continue;
-                    sb.setCharAt(i, alpha);                      //change the temp word
-                    Node neighbor = new Node(sb.toString().toUpperCase());
-                    if (dictionary.contains(neighbor.toString())) {
-                        if (!breadthVisited.contains(neighbor.toString())) {        //if the temp word exists
-                            neighbor.setParent(root);
-                            Q.add(neighbor);
-                            breadthVisited.add(neighbor.toString());
-                        }
-                    }
+            ArrayList<String> nextWords = adjacents.get(root.toString());
+            if(nextWords.contains(end.toString())){
+                Q.push(end.setParent(root));
+            }
+            nextWords.stream().filter(word -> !breadthVisited.contains(word)).forEach(word -> {breadthVisited.add(word); Q.add(new Node(word).setParent(root));});
+        }
+        return new ArrayList<String>();
+    }
+
+    private static ArrayList<String> getWLDFS(String start, String end) {
+        start = start.toUpperCase(); end = end.toUpperCase();
+        ArrayList<String> value = new ArrayList<String>();      //value to return
+        if(start.equals(end)){
+            value.add(end);
+            return value;
+        }
+        if(deapthVisited.contains(start)){
+            return value;
+        }
+        deapthVisited.add(start);
+        ArrayList<String> nextWords = adjacents.get(start);
+        if(nextWords.contains(end)){
+            getWLDFS(end,end);
+        }
+        for(String word:nextWords){
+            if(!deapthVisited.contains(word)) {
+                value = getWLDFS(word, end);
+                if (!value.isEmpty()) {
+                    value.add(start);
+                    return value;
                 }
             }
         }
-        return new ArrayList<String>();
+        return value;
     }
 }
