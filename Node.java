@@ -1,4 +1,4 @@
-/* WORD LADDER Main.java
+/* WORD LADDER Node.java
  * EE422C Project 3 submission by
  * Anthony Bauer
  * amb6869
