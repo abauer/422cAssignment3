@@ -14,8 +14,6 @@
 
 package assignment3;
 
-import org.junit.Test;
-
 import java.util.*;
 import java.io.*;
 
@@ -222,10 +220,4 @@ public class Main {
             it.remove(); // avoids a ConcurrentModificationException
         }
     }
-    @Test
-    public void testb1(){   //first test similar to example provided for verification of length
-        initialize();
-        ArrayList<String> temp = getWordLadderBFS("money","stone");
-        printLadder(temp);
     }
-}
